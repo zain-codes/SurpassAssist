@@ -21,7 +21,7 @@ Sicne the project is in it's infency we only a smill demo available for the publ
 ![Team OptiVision Banner](https://cdn.discordapp.com/attachments/1126133480204554292/1127247949433409536/didhx635-removebg-preview.png)
 ### Team Members
 
-- [Tarek Zain]()
+- [Tarek Zain](https://github.com/zain-codes)
 - [Maan Sulaimani](https://github.com/maans2001)
 - [RassanMa](https://github.com/RassanMa)
 - [Suad Abu Shhadeh](https://www.linkedin.com/in/suad-abu-shhadeh-961600198)
