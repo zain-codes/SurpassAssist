@@ -13,7 +13,7 @@ Surpass Assist is a computer vision-based solution designed to significantly enh
 
 ## Try The Alpha Version
 
-Sicne the project is in it's infency we only a smill demo available for the public: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1r0lJmQfBUE35CoIMFeC3QKnnIfxU29P9?usp=sharing)
+Sicne the project is in it's infency we only a small demo available for the public: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1r0lJmQfBUE35CoIMFeC3QKnnIfxU29P9?usp=sharing)
 
 ## Demo Video
 [![Surpass Assist Demo Video](http://img.youtube.com/vi/C8QxjVD6yD8/0.jpg)](http://www.youtube.com/watch?v=C8QxjVD6yD8 "Surpass Assist Demo Video")
