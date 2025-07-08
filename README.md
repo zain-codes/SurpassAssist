@@ -11,6 +11,18 @@ Surpass Assist is a computer vision-based solution designed to significantly enh
 - **Real-Time Data Analysis:** Surpass Assist collects and processes data in real-time for immediate response and decision-making.
 - **Safety Alert System:** Alerts are relayed to drivers on when it's safe to overtake the large trucks.
 
+## Command Line Usage
+
+After installing the dependencies, you can process a video directly from the
+terminal:
+
+```bash
+python -m surpassassist <input_video> <model_path> <output_video>
+```
+
+The command loads the YOLO model, processes the video, and saves the annotated
+output to the location you specify.
+
 ## Try The Alpha Version
 
 Sicne the project is in it's infency we only a small demo available for the public: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1r0lJmQfBUE35CoIMFeC3QKnnIfxU29P9?usp=sharing)
