@@ -11,17 +11,31 @@ Surpass Assist is a computer vision-based solution designed to significantly enh
 - **Real-Time Data Analysis:** Surpass Assist collects and processes data in real-time for immediate response and decision-making.
 - **Safety Alert System:** Alerts are relayed to drivers on when it's safe to overtake the large trucks.
 
+## Lane Detection Model
+
+The lane detection component relies on the open-source
+[Ultra-Fast-Lane-Detection](https://github.com/cfzd/Ultra-Fast-Lane-Detection)
+(UFLD) network. Download the pretrained weights (for example
+`culane_18.pth`) from the project's releases:
+
+```bash
+wget https://github.com/cfzd/Ultra-Fast-Lane-Detection/releases/download/v1.0.0/culane_18.pth
+```
+
+Provide the path to the downloaded file when running the command line tool.
+
 ## Command Line Usage
 
 After installing the dependencies, you can process a video directly from the
 terminal:
 
 ```bash
-python -m surpassassist <input_video> <model_path> <output_video>
+python -m surpassassist <input_video> <model_path> <lane_model> <output_video>
 ```
 
 The command loads the YOLO model, processes the video, and saves the annotated
-output to the location you specify.
+output to the location you specify. The lane model path should point to the
+pretrained UFLD weights you downloaded earlier.
 
 ## Try The Alpha Version
 
