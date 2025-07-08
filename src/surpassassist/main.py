@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process a video using Surpass Assist")
     parser.add_argument("video", help="Path to input video")
     parser.add_argument("model", help="Path to YOLO model")
+    parser.add_argument("lane_model", help="Path to lane detection weights")
     parser.add_argument("output", help="Path to save annotated video")
     return parser.parse_args()
 
@@ -41,6 +42,7 @@ def main() -> None:
     process_video(
         Path(args.video),
         Path(args.model),
+        Path(args.lane_model),
         Path(args.output),
         class_indexes,
         classes,

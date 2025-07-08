@@ -17,11 +17,13 @@ from .detection import (
     is_surpassable,
     create_label,
 )
+from lane_detection import LaneDetector
 
 
 def process_video(
     video_path: str | Path,
     model_path: str | Path,
+    lane_model_path: str | Path | None,
     output_video_path: str | Path,
     class_indexes: list,
     classes: dict,
@@ -37,6 +39,9 @@ def process_video(
     output_video = cv2.VideoWriter(str(output_video_path), fourcc, fps, (frame_width, frame_height))
 
     model = ultralytics.YOLO(str(model_path))
+    lane_detector: LaneDetector | None = None
+    if lane_model_path is not None:
+        lane_detector = LaneDetector(lane_model_path)
     pbar = tqdm(total=total_frames, desc="Rendering video")
 
     past_areas: dict[int, list[float]] = {}
@@ -47,6 +52,13 @@ def process_video(
         ret, frame = video_capture.read()
         if not ret:
             break
+        lane_mask = None
+        left_lane_clear = True
+        if lane_detector is not None:
+            lane_mask = lane_detector.detect(frame)
+            left_lane_clear = lane_detector.is_left_lane_clear(lane_mask)
+            frame = lane_detector.overlay_lanes(frame, lane_mask)
+
         result = model.predict(frame, classes=class_indexes, verbose=False, agnostic_nms=True)[0]
         detections = sv.Detections.from_yolov8(result)
         detections = detections[np.isin(detections.class_id, class_indexes)]
@@ -58,7 +70,7 @@ def process_video(
             past_areas = calculate_and_store_area(past_areas, tracker_id, box_area, N)
             direction = determine_direction(past_areas, tracker_id, N, box_area)
             last_frame_boxes = update_last_frame_boxes(last_frame_boxes, tracker_id, xyxy)
-            surpassable = is_surpassable(distance, direction)
+            surpassable = is_surpassable(distance, direction) and left_lane_clear
             new_labels.append(create_label(classes, class_id, direction, distance, surpassable))
 
         frame = box_annotator.annotate(scene=frame, detections=detections, labels=new_labels)
