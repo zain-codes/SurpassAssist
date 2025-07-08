@@ -24,6 +24,28 @@ wget https://github.com/cfzd/Ultra-Fast-Lane-Detection/releases/download/v1.0.0/
 
 Provide the path to the downloaded file when running the command line tool.
 
+## Installation
+
+First install the Python dependencies using `pip`:
+
+```bash
+pip install -r requirements.txt
+```
+
+Alternatively you can build a Docker image:
+
+```bash
+docker build -t surpassassist .
+```
+```bash
+docker run --gpus all -v $(pwd):/workdir surpassassist \
+    <input_video> <model_path> <lane_model> <output_video>
+```
+
+If you don't have access to a local GPU, try running the project on a cloud
+notebook platform such as Google Colab or Kaggle, or any container-based GPU
+service.
+
 ## Command Line Usage
 
 After installing the dependencies, you can process a video directly from the
