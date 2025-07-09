@@ -4,15 +4,22 @@ body {
     color: #fff;
     font-family: Arial, sans-serif;
     text-align: center;
+    overflow: hidden;
 }
-#gameCanvas {
-    background: #777;
-    display: block;
-    margin: 0 auto;
+
+#gameContainer {
+    width: 100vw;
+    height: 100vh;
 }
+
 #scoreBoard {
-    margin-top: 10px;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 24px;
+    z-index: 100;
 }
+
 .overlay {
     position: absolute;
     top: 0;
@@ -23,9 +30,19 @@ body {
     align-items: center;
     justify-content: center;
     background: rgba(0,0,0,0.7);
+    z-index: 200;
 }
+
 #startButton {
-    padding: 10px 20px;
-    font-size: 20px;
+    padding: 15px 30px;
+    font-size: 24px;
     cursor: pointer;
+    background: #007acc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+#startButton:hover {
+    background: #005a99;
 }

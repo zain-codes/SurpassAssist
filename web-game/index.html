@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overtake Assist Demo</title>
+    <title>3D Overtake Assist Demo</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
     <div id="startScreen" class="overlay">
-        <button id="startButton">Start</button>
+        <button id="startButton">Start 3D Game</button>
     </div>
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="gameContainer"></div>
     <div id="scoreBoard">Score: <span id="score">0</span></div>
     <script src="game.js"></script>
 </body>
