@@ -36,9 +36,10 @@ function drawCar(car) {
 
 function drawTruck() {
     drawCar(truck);
-    // draw panel on back
+    // draw panel on the rear of the truck
     ctx.fillStyle = truck.panel === 'green' ? 'lime' : 'red';
-    ctx.fillRect(truck.x - 10, truck.y + truck.height/2 - 10, 20, 10);
+    // Position the LED panel flush with the top of the truck to represent its back
+    ctx.fillRect(truck.x - 10, truck.y - truck.height/2, 20, 10);
 }
 
 function spawnOncoming() {
