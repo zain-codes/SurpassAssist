@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Road background -->
+    <path
+        android:fillColor="#404040"
+        android:pathData="M30,0 L90,0 L90,120 L30,120 Z" />
+
+    <!-- Center dashed line -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M59,5 L61,5 L61,25 L59,25 Z" />
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M59,35 L61,35 L61,55 L59,55 Z" />
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M59,65 L61,65 L61,85 L59,85 Z" />
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M59,95 L61,95 L61,115 L59,115 Z" />
+
+    <!-- Player car (blue) -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M65,60 L80,60 L80,95 L65,95 Z" />
+    <path
+        android:fillColor="#87CEEB"
+        android:pathData="M68,63 L77,63 L77,73 L68,73 Z" />
+
+    <!-- Truck (brown) -->
+    <path
+        android:fillColor="#6D4C41"
+        android:pathData="M38,15 L55,15 L55,55 L38,55 Z" />
+    <path
+        android:fillColor="#87CEEB"
+        android:pathData="M40,45 L53,45 L53,53 L40,53 Z" />
+
+    <!-- Oncoming car (red) -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M38,75 L52,75 L52,100 L38,100 Z" />
+
+</vector>

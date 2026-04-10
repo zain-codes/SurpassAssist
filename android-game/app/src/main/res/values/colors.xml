@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#1565C0</color>
+    <color name="primary_dark">#0D47A1</color>
+    <color name="accent">#FF6F00</color>
+    <color name="background_dark">#1A1A2E</color>
+    <color name="surface_dark">#16213E</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0BEC5</color>
+    <color name="safe_green">#4CAF50</color>
+    <color name="danger_red">#F44336</color>
+    <color name="warning_amber">#FFC107</color>
+    <color name="road_gray">#404040</color>
+    <color name="grass_green">#4A7C3F</color>
+    <color name="player_blue">#2196F3</color>
+    <color name="truck_brown">#6D4C41</color>
+    <color name="oncoming_red">#E53935</color>
+</resources>

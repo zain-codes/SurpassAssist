@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SurpassAssist</string>
+    <string name="game_title">SURPASS ASSIST</string>
+    <string name="game_subtitle">Overtake Safely. Drive Smart.</string>
+    <string name="play_button">PLAY</string>
+    <string name="high_score_label">High Score: %d</string>
+    <string name="how_to_play_title">How to Play</string>
+    <string name="how_to_play_text">Tap LEFT side of screen to move left.\nTap RIGHT side to move right.\n\nOvertake trucks safely using the middle lane.\nAvoid oncoming traffic in the left lane.\nWatch the safety indicator before overtaking!</string>
+    <string name="game_over_title">GAME OVER</string>
+    <string name="final_score">Score: %d</string>
+    <string name="new_high_score">NEW HIGH SCORE!</string>
+    <string name="play_again">PLAY AGAIN</string>
+    <string name="main_menu">MAIN MENU</string>
+</resources>
