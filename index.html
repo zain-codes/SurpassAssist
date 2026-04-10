@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>SurpassAssist — Overtake Game</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #1A1A2E;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Menu Screen ─────────────────────────────────── */
+#menu {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  background: linear-gradient(180deg, #0D47A1 0%, #1A1A2E 100%);
+}
+#menu h1 {
+  font-size: 9vw; color: #fff; letter-spacing: 4px;
+  text-shadow: 0 0 20px rgba(33,150,243,0.5);
+}
+#menu .subtitle { color: #90CAF9; font-size: 4vw; margin-top: 8px; }
+#menu .high-score { color: #FFC107; font-size: 4.5vw; margin-top: 28px; font-weight: bold; }
+#menu .btn {
+  margin-top: 24px; padding: 16px 56px; font-size: 5.5vw; font-weight: bold;
+  border: none; border-radius: 12px; cursor: pointer;
+  transition: transform .1s;
+}
+#menu .btn:active { transform: scale(0.95); }
+#menu .play-btn { background: #4CAF50; color: #fff; }
+#menu .help-btn {
+  background: transparent; color: #90CAF9; border: 2px solid #90CAF9;
+  font-size: 4vw; padding: 10px 36px; margin-top: 14px;
+}
+
+/* ── Game Canvas ─────────────────────────────────── */
+#gameCanvas {
+  display: none; width: 100%; height: 100%;
+  touch-action: none;
+}
+
+/* ── Game Over Overlay ───────────────────────────── */
+#gameOver {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.82);
+  flex-direction: column; align-items: center; justify-content: center;
+  z-index: 10;
+}
+#gameOver h2 { color: #F44336; font-size: 10vw; }
+#gameOver .score { color: #fff; font-size: 7vw; margin-top: 12px; }
+#gameOver .new-high { color: #FFC107; font-size: 5vw; margin-top: 8px; font-weight: bold; }
+#gameOver .btn { margin-top: 20px; }
+#gameOver .play-btn { background: #4CAF50; color: #fff; }
+#gameOver .menu-btn { background: #1565C0; color: #fff; }
+
+/* ── How-to-Play Modal ───────────────────────────── */
+#helpModal {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  flex-direction: column; align-items: center; justify-content: center;
+  z-index: 20; padding: 24px;
+}
+#helpModal .card {
+  background: #16213E; border-radius: 16px; padding: 28px; max-width: 380px;
+  text-align: center;
+}
+#helpModal h3 { color: #fff; font-size: 6vw; margin-bottom: 16px; }
+#helpModal p { color: #B0BEC5; font-size: 3.8vw; line-height: 1.6; }
+#helpModal .btn { margin-top: 20px; background: #1565C0; color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- ── Menu ──────────────────────────────────────── -->
+<div id="menu">
+  <h1>SURPASS ASSIST</h1>
+  <div class="subtitle">Overtake Safely. Drive Smart.</div>
+  <div class="high-score" id="menuHighScore"></div>
+  <button class="btn play-btn" onclick="startGame()">PLAY</button>
+  <button class="btn help-btn" onclick="showHelp()">How to Play</button>
+</div>
+
+<!-- ── Game Canvas ───────────────────────────────── -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- ── Game Over ─────────────────────────────────── -->
+<div id="gameOver">
+  <h2>GAME OVER</h2>
+  <div class="score" id="finalScore"></div>
+  <div class="new-high" id="newHighLabel" style="display:none">NEW HIGH SCORE!</div>
+  <button class="btn play-btn" onclick="startGame()">PLAY AGAIN</button>
+  <button class="btn menu-btn" onclick="showMenu()">MAIN MENU</button>
+</div>
+
+<!-- ── Help Modal ────────────────────────────────── -->
+<div id="helpModal">
+  <div class="card">
+    <h3>How to Play</h3>
+    <p>
+      <b>Tap LEFT</b> side of screen to move left.<br>
+      <b>Tap RIGHT</b> side to move right.<br><br>
+      You drive in the <b style="color:#4CAF50">right lane</b>.<br>
+      Slow trucks appear ahead — overtake them using the <b style="color:#FFC107">middle lane</b>.<br>
+      <b style="color:#F44336">Oncoming cars</b> use the left lane.<br><br>
+      Watch the <b>safety indicator</b> before overtaking!<br>
+      Chain overtakes for <b style="color:#FFC107">combo bonuses</b>.
+    </p>
+    <button class="btn" onclick="hideHelp()">GOT IT</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  SurpassAssist — Mobile Overtaking Game
+//  HTML5 Canvas port of the Android game
+// ══════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// ── State ───────────────────────────────────────────────────
+let W, H, roadLeft, roadRight, roadWidth, laneW, laneCX = [];
+let playerX, playerTargetX, playerY, playerW, playerH;
+let currentLane = 2;
+let score, lives, gameSpeed, elapsed, markingOff;
+let trucks, oncoming;
+let truckTimer, truckInterval, oncomTimer, oncomInterval;
+let nearTruckDist, nearOncomDist, safeToOvertake, warning;
+let invulnerable, invulTimer, comboCount;
+let gameOver, animId;
+
+// ── High score persistence ──────────────────────────────────
+function getHigh() { return parseInt(localStorage.getItem('sa_high') || '0'); }
+function setHigh(v) { localStorage.setItem('sa_high', v); }
+
+// ── UI helpers ──────────────────────────────────────────────
+function showMenu() {
+  cancelAnimationFrame(animId);
+  document.getElementById('menu').style.display = 'flex';
+  canvas.style.display = 'none';
+  document.getElementById('gameOver').style.display = 'none';
+  const h = getHigh();
+  document.getElementById('menuHighScore').textContent = h > 0 ? `High Score: ${h}` : '';
+}
+function showHelp() { document.getElementById('helpModal').style.display = 'flex'; }
+function hideHelp() { document.getElementById('helpModal').style.display = 'none'; }
+
+// ── Resize ──────────────────────────────────────────────────
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  roadWidth = W * 0.78;
+  roadLeft  = (W - roadWidth) / 2;
+  roadRight = roadLeft + roadWidth;
+  laneW     = roadWidth / 3;
+  laneCX    = [0,1,2].map(i => roadLeft + laneW * i + laneW / 2);
+  playerW   = laneW * 0.52;
+  playerH   = playerW * 2.1;
+  playerY   = H * 0.72;
+}
+
+// ── Start game ──────────────────────────────────────────────
+function startGame() {
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('gameOver').style.display = 'none';
+  canvas.style.display = 'block';
+  resize();
+  currentLane = 2;
+  playerX = playerTargetX = laneCX[2];
+  score = 0; lives = 3; gameSpeed = 420; elapsed = 0; markingOff = 0;
+  trucks = []; oncoming = [];
+  truckTimer = 0; truckInterval = 3.2;
+  oncomTimer = 0; oncomInterval = 2.8;
+  nearTruckDist = -1; nearOncomDist = -1;
+  safeToOvertake = true; warning = '';
+  invulnerable = false; invulTimer = 0; comboCount = 0;
+  gameOver = false;
+  lastTime = performance.now();
+  animId = requestAnimationFrame(loop);
+}
+
+// ── Game loop ───────────────────────────────────────────────
+let lastTime = 0;
+function loop(now) {
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+  if (!gameOver) update(dt);
+  draw();
+  if (!gameOver) animId = requestAnimationFrame(loop);
+}
+
+// ── Update ──────────────────────────────────────────────────
+function update(dt) {
+  elapsed += dt;
+  gameSpeed = 420 + elapsed * 6;
+  truckInterval = Math.max(1.3, 3.2 - elapsed * 0.018);
+  oncomInterval = Math.max(0.9, 2.8 - elapsed * 0.014);
+
+  // Smooth lane change
+  const moveSpd = laneW * 8 * dt;
+  const diff = playerTargetX - playerX;
+  if (Math.abs(diff) > 2) playerX += Math.sign(diff) * Math.min(moveSpd, Math.abs(diff));
+  else playerX = playerTargetX;
+
+  markingOff = (markingOff + gameSpeed * dt) % 80;
+
+  // Spawn trucks
+  truckTimer += dt;
+  if (truckTimer >= truckInterval) { truckTimer = 0; spawnTruck(); }
+
+  // Spawn oncoming
+  oncomTimer += dt;
+  if (oncomTimer >= oncomInterval) { oncomTimer = 0; spawnOncoming(); }
+
+  // Move trucks (drift down slowly)
+  const truckDrift = gameSpeed * 0.25;
+  for (let i = trucks.length - 1; i >= 0; i--) {
+    const t = trucks[i];
+    t.y += truckDrift * dt;
+    if (!t.overtaken && currentLane !== t.lane && playerY + playerH/2 < t.y - t.h/2) {
+      t.overtaken = true;
+      comboCount++;
+      score += 100 * comboCount;
+    }
+    if (t.y > H + t.h) trucks.splice(i, 1);
+  }
+
+  // Move oncoming (fast)
+  const oncomSpd = gameSpeed * 1.6;
+  for (let i = oncoming.length - 1; i >= 0; i--) {
+    oncoming[i].y += oncomSpd * dt;
+    if (oncoming[i].y > H + oncoming[i].h) oncoming.splice(i, 1);
+  }
+
+  // Reset combo if nothing nearby
+  if (!trucks.some(t => !t.overtaken && t.y > playerY - H*0.5 && t.y < playerY + H*0.3)) comboCount = 0;
+
+  // Safety analysis
+  updateSafety();
+
+  // Invulnerability
+  if (invulnerable) { invulTimer -= dt; if (invulTimer <= 0) invulnerable = false; }
+
+  // Collisions
+  if (!invulnerable) checkCollisions();
+}
+
+function spawnTruck() {
+  const lane = Math.random() < 0.75 ? 2 : 1;
+  if (trucks.some(t => t.lane === lane && t.y < H * 0.15)) return;
+  const tw = laneW * 0.62, th = tw * 2.8;
+  const colors = ['#5D4037','#4E342E','#6D4C41','#795548'];
+  trucks.push({ x: laneCX[lane], y: -th, w: tw, h: th, lane, overtaken: false, color: colors[Math.random()*colors.length|0] });
+}
+
+function spawnOncoming() {
+  if (oncoming.some(c => c.y < -H*0.1)) return;
+  const cw = laneW * 0.48, ch = cw * 2.1;
+  const colors = ['#E53935','#D32F2F','#C62828','#FF7043','#8E24AA','#F4511E'];
+  oncoming.push({ x: laneCX[0], y: -ch*1.5, w: cw, h: ch, lane: 0, color: colors[Math.random()*colors.length|0] });
+}
+
+function updateSafety() {
+  nearTruckDist = -1;
+  trucks.filter(t => !t.overtaken).forEach(t => {
+    const d = (playerY - t.y) / 8;
+    if (d > 0 && (nearTruckDist < 0 || d < nearTruckDist)) nearTruckDist = d;
+  });
+  nearOncomDist = -1;
+  oncoming.forEach(c => {
+    const d = (playerY - c.y) / 8;
+    if (d > 0 && (nearOncomDist < 0 || d < nearOncomDist)) nearOncomDist = d;
+  });
+  const danger = nearOncomDist >= 0 && nearOncomDist <= 70;
+  const caution = nearOncomDist >= 0 && nearOncomDist <= 120;
+  safeToOvertake = !danger;
+  warning = danger ? 'ONCOMING VEHICLE — DO NOT OVERTAKE'
+          : caution ? 'CAUTION — Vehicle approaching'
+          : nearTruckDist >= 0 && nearTruckDist <= 20 ? 'TOO CLOSE — Maintain distance' : '';
+}
+
+function checkCollisions() {
+  const pL = playerX - playerW/2, pR = playerX + playerW/2;
+  const pT = playerY - playerH/2, pB = playerY + playerH/2;
+  for (const v of [...trucks, ...oncoming]) {
+    const vL = v.x - v.w/2, vR = v.x + v.w/2;
+    const vT = v.y - v.h/2, vB = v.y + v.h/2;
+    if (pL < vR && pR > vL && pT < vB && pB > vT) {
+      lives--; invulnerable = true; invulTimer = 2; comboCount = 0;
+      if (lives <= 0) endGame();
+      return;
+    }
+  }
+}
+
+function endGame() {
+  gameOver = true;
+  draw(); // one last frame
+  const h = getHigh();
+  const isNew = score > h;
+  if (isNew) setHigh(score);
+  document.getElementById('finalScore').textContent = `Score: ${score}`;
+  document.getElementById('newHighLabel').style.display = isNew ? 'block' : 'none';
+  document.getElementById('gameOver').style.display = 'flex';
+}
+
+// ── Draw ────────────────────────────────────────────────────
+function draw() {
+  // Grass
+  ctx.fillStyle = '#2E7D32';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grass stripes
+  ctx.fillStyle = '#388E3C';
+  let gy = ((-80 + markingOff * 0.4) % 60) - 60;
+  while (gy < H) {
+    ctx.fillRect(0, gy, roadLeft, 30);
+    ctx.fillRect(roadRight, gy, W - roadRight, 30);
+    gy += 60;
+  }
+
+  // Road shoulder
+  ctx.fillStyle = '#5A5A5A';
+  ctx.fillRect(roadLeft - 10, 0, 10, H);
+  ctx.fillRect(roadRight, 0, 10, H);
+
+  // Road surface
+  ctx.fillStyle = '#3A3A3A';
+  ctx.fillRect(roadLeft, 0, roadWidth, H);
+
+  // Center double yellow (between lane 0 and 1)
+  const clX = roadLeft + laneW;
+  ctx.fillStyle = '#FDD835';
+  let my = -80 + markingOff;
+  while (my < H) {
+    ctx.fillRect(clX - 5, my, 4, 40);
+    ctx.fillRect(clX + 1, my, 4, 40);
+    my += 80;
+  }
+
+  // Lane dash white (between lane 1 and 2)
+  const ldX = roadLeft + laneW * 2;
+  ctx.fillStyle = '#fff';
+  let dy = -80 + markingOff;
+  while (dy < H) {
+    ctx.fillRect(ldX - 2, dy, 4, 35);
+    dy += 80;
+  }
+
+  // Road edge lines
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(roadLeft, 0); ctx.lineTo(roadLeft, H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(roadRight, 0); ctx.lineTo(roadRight, H); ctx.stroke();
+
+  // Lane direction arrows
+  drawLaneArrows();
+
+  // Vehicles
+  trucks.forEach(t => drawTruck(t));
+  oncoming.forEach(c => drawOncomingCar(c));
+
+  // Distance labels
+  trucks.filter(t => !t.overtaken && t.y > 0 && t.y < playerY).forEach(t => {
+    const dm = ((playerY - t.y) / 8) | 0;
+    ctx.fillStyle = '#81D4FA'; ctx.font = `bold ${W*0.028}px sans-serif`; ctx.textAlign = 'center';
+    ctx.fillText(`${dm}m`, t.x, t.y + t.h/2 + 30);
+  });
+
+  // Player
+  if (!invulnerable || (Date.now() % 200 < 120)) drawPlayer();
+
+  // Touch hints
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.font = `${W*0.12}px sans-serif`; ctx.textAlign = 'center';
+  ctx.fillText('◀', W * 0.07, H * 0.52);
+  ctx.fillText('▶', W * 0.93, H * 0.52);
+
+  // HUD
+  drawHUD();
+}
+
+function drawLaneArrows() {
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let lane = 0; lane < 3; lane++) {
+    const cx = laneCX[lane];
+    let ay = (-80 + markingOff * 0.5) % 160 - 160;
+    while (ay < H) {
+      ctx.beginPath();
+      if (lane === 0) {
+        ctx.moveTo(cx, ay + 30); ctx.lineTo(cx - 12, ay + 10); ctx.lineTo(cx + 12, ay + 10);
+      } else {
+        ctx.moveTo(cx, ay); ctx.lineTo(cx - 12, ay + 20); ctx.lineTo(cx + 12, ay + 20);
+      }
+      ctx.closePath(); ctx.fill();
+      ay += 160;
+    }
+  }
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawPlayer() {
+  const l = playerX - playerW/2, t = playerY - playerH/2;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  roundRect(l + 4, t + 6, playerW, playerH, 10); ctx.fill();
+
+  // Body
+  ctx.fillStyle = '#1E88E5';
+  roundRect(l, t, playerW, playerH, 10); ctx.fill();
+
+  // Roof
+  const ri = playerW * 0.12;
+  ctx.fillStyle = '#1565C0';
+  roundRect(l + ri, t + playerH*0.15, playerW - ri*2, playerH*0.7, 6); ctx.fill();
+
+  // Windshield
+  ctx.fillStyle = '#81D4FA';
+  roundRect(l + ri + 2, t + 6, playerW - ri*2 - 4, playerH*0.22, 4); ctx.fill();
+
+  // Rear window
+  roundRect(l + ri + 4, t + playerH - playerH*0.22, playerW - ri*2 - 8, playerH*0.14, 4); ctx.fill();
+
+  // Headlights
+  ctx.fillStyle = '#FFF9C4';
+  ctx.beginPath(); ctx.ellipse(l + playerW*0.15, t + 5, playerW*0.08, 4, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(l + playerW*0.85, t + 5, playerW*0.08, 4, 0, 0, Math.PI*2); ctx.fill();
+
+  // Taillights
+  ctx.fillStyle = '#F44336';
+  ctx.beginPath(); ctx.ellipse(l + playerW*0.12, t + playerH - 5, playerW*0.07, 3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(l + playerW*0.88, t + playerH - 5, playerW*0.07, 3, 0, 0, Math.PI*2); ctx.fill();
+}
+
+function drawTruck(v) {
+  const l = v.x - v.w/2, t = v.y - v.h/2;
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  roundRect(l+4, t+6, v.w, v.h, 8); ctx.fill();
+  // Trailer
+  ctx.fillStyle = v.color;
+  roundRect(l, t, v.w, v.h*0.8, 6); ctx.fill();
+  // Cab
+  ctx.fillStyle = '#37474F';
+  roundRect(l+2, t+v.h*0.72, v.w-4, v.h*0.28, 6); ctx.fill();
+  // Windshield
+  ctx.fillStyle = '#81D4FA';
+  roundRect(l+v.w*0.15, t+v.h*0.78, v.w*0.7, v.h*0.14, 4); ctx.fill();
+  // Rear lights
+  ctx.fillStyle = '#FF7043';
+  ctx.fillRect(l+3, t+2, v.w*0.17, 6);
+  ctx.fillRect(l+v.w-v.w*0.17-3, t+2, v.w*0.17, 6);
+}
+
+function drawOncomingCar(v) {
+  const l = v.x - v.w/2, t = v.y - v.h/2;
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  roundRect(l+3, t+5, v.w, v.h, 8); ctx.fill();
+  // Body
+  ctx.fillStyle = v.color;
+  roundRect(l, t, v.w, v.h, 8); ctx.fill();
+  // Roof
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  const ri = v.w*0.12;
+  roundRect(l+ri, t+v.h*0.2, v.w-ri*2, v.h*0.6, 4); ctx.fill();
+  // Windshield (bottom, facing us)
+  ctx.fillStyle = '#81D4FA';
+  roundRect(l+ri+2, t+v.h*0.7, v.w-ri*2-4, v.h*0.2, 4); ctx.fill();
+  // Headlights
+  ctx.fillStyle = '#FFF9C4';
+  ctx.beginPath(); ctx.ellipse(l+v.w*0.15, t+v.h-4, v.w*0.08, 3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(l+v.w*0.85, t+v.h-4, v.w*0.08, 3, 0, 0, Math.PI*2); ctx.fill();
+}
+
+function drawHUD() {
+  // Top bar bg
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, 0, W, H*0.1 + 40);
+
+  // Safety indicator
+  const indY = H * 0.032;
+  ctx.textAlign = 'center';
+  if (safeToOvertake) {
+    ctx.fillStyle = '#4CAF50'; ctx.font = `bold ${W*0.038}px sans-serif`;
+    ctx.fillText('✓ SAFE TO OVERTAKE', W/2, indY + 4);
+  } else {
+    ctx.fillStyle = '#F44336'; ctx.font = `bold ${W*0.038}px sans-serif`;
+    ctx.fillText('✗ DO NOT OVERTAKE', W/2, indY + 4);
+  }
+
+  // Warning
+  if (warning) {
+    ctx.fillStyle = '#FFC107'; ctx.font = `bold ${W*0.026}px sans-serif`;
+    ctx.fillText(warning, W/2, indY + 32);
+  }
+
+  // Score (left)
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${W*0.042}px sans-serif`;
+  ctx.fillText(`${score}`, 16, indY + 68);
+
+  // Combo (center)
+  if (comboCount > 1) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFC107'; ctx.font = `bold ${W*0.034}px sans-serif`;
+    ctx.fillText(`${comboCount}x COMBO!`, W/2, indY + 68);
+  }
+
+  // Lives (right)
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#F44336'; ctx.font = `${W*0.042}px sans-serif`;
+  ctx.fillText('❤'.repeat(lives), W - 16, indY + 68);
+
+  // Bottom HUD bar
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  roundRect(6, H - 54, 150, 44, 8); ctx.fill();
+
+  // Speed
+  const spd = (gameSpeed / 8) | 0;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${W*0.03}px sans-serif`;
+  ctx.fillText(`${spd} km/h`, 14, H - 26);
+
+  // Lane label (center bottom)
+  const laneNames = ['ONCOMING', 'OVERTAKE', 'DRIVING'];
+  const laneColors = ['#F44336', '#FFC107', '#4CAF50'];
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  roundRect(W/2 - 60, H - 54, 120, 44, 8); ctx.fill();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = laneColors[currentLane]; ctx.font = `bold ${W*0.028}px sans-serif`;
+  ctx.fillText(laneNames[currentLane], W/2, H - 26);
+
+  // Distance (right bottom)
+  if (nearTruckDist > 0) {
+    const dTxt = `Truck: ${nearTruckDist|0}m`;
+    ctx.font = `bold ${W*0.03}px sans-serif`;
+    const tw = ctx.measureText(dTxt).width + 20;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    roundRect(W - tw - 10, H - 54, tw, 44, 8); ctx.fill();
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(dTxt, W - 18, H - 26);
+  }
+}
+
+// ── Input ───────────────────────────────────────────────────
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (gameOver) return;
+  const x = e.touches[0].clientX;
+  if (x < W / 2) currentLane = Math.max(0, currentLane - 1);
+  else currentLane = Math.min(2, currentLane + 1);
+  playerTargetX = laneCX[currentLane];
+}, { passive: false });
+
+// Keyboard support for testing
+document.addEventListener('keydown', e => {
+  if (gameOver) return;
+  if (e.key === 'ArrowLeft' || e.key === 'a') {
+    currentLane = Math.max(0, currentLane - 1);
+    playerTargetX = laneCX[currentLane];
+  } else if (e.key === 'ArrowRight' || e.key === 'd') {
+    currentLane = Math.min(2, currentLane + 1);
+    playerTargetX = laneCX[currentLane];
+  }
+});
+
+window.addEventListener('resize', () => { if (!gameOver) resize(); });
+
+// Init menu
+showMenu();
+</script>
+</body>
+</html>
